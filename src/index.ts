@@ -20,18 +20,20 @@ export async function run(): Promise<void> {
     let dockerFiles = getInputList('dockerfiles');
     const newImage = `${core.getInput('image', { required: true })}:${core.getInput('tag', { required: true })}`;
 
+    const flags = core.getInput('flags').split(' ');
+
     const useOCI = core.getInput("oci") == "true";
 
     if (dockerFiles.length !== 0) {
-        await doBuildUsingDockerFiles(cli, newImage, workspace, dockerFiles, useOCI);
+        await doBuildUsingDockerFiles(cli, newImage, workspace, dockerFiles, useOCI, flags);
     } else {
-        await doBuildFromScratch(cli, newImage, workspace, useOCI);
+        await doBuildFromScratch(cli, newImage, workspace, useOCI, flags);
     }
 
     core.setOutput("image", newImage);
 }
 
-async function doBuildUsingDockerFiles(cli: BuildahCli, newImage: string, workspace: string, dockerFiles: string[], useOCI: boolean): Promise<void> {
+async function doBuildUsingDockerFiles(cli: BuildahCli, newImage: string, workspace: string, dockerFiles: string[], useOCI: boolean, flags: string[]): Promise<void> {
     if (dockerFiles.length === 1) {
         core.info(`Performing build from Dockerfile`);
     }
@@ -42,10 +44,10 @@ async function doBuildUsingDockerFiles(cli: BuildahCli, newImage: string, worksp
     const context = path.join(workspace, core.getInput('context'));
     const buildArgs = getInputList('build-args');
     dockerFiles = dockerFiles.map(file => path.join(workspace, file));
-    await cli.buildUsingDocker(newImage, context, dockerFiles, buildArgs, useOCI);
+    await cli.buildUsingDocker(newImage, context, dockerFiles, buildArgs, useOCI, flags);
 }
 
-async function doBuildFromScratch(cli: BuildahCli, newImage: string, workspace: string, useOCI: boolean): Promise<void> {
+async function doBuildFromScratch(cli: BuildahCli, newImage: string, workspace: string, useOCI: boolean, flags: string[]): Promise<void> {
     core.info(`Performing build from scratch`)
 
     let baseImage = core.getInput('base-image');
@@ -81,7 +83,7 @@ async function doBuildFromScratch(cli: BuildahCli, newImage: string, workspace: 
         envs: envs
     };
     await cli.config(containerId, newImageConfig);
-    await cli.commit(containerId, newImage, useOCI);
+    await cli.commit(containerId, newImage, useOCI, flags);
 }
 
 function getInputList(name: string): string[] {

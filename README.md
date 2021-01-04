@@ -116,6 +116,12 @@ envs: |
   GOPATH=/root/buildah/go</pre>
     </td>
   </tr>
+
+  <tr>
+    <td>flags</td>
+    <td>No</td>
+    <td>Flags to pass to `buildah bud`</td>
+  </tr>
 </table>
 
 ## Build Types
